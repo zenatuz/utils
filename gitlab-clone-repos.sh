@@ -7,21 +7,9 @@
 # Purpose    : Clone all repos in a given Gitlab Group     #
 # Depends    : curl, git, jq                               #
 # Arguments  : -g, -h                                      #
+# This script runs under GPL-3.0, details can be found on  #
+# https://github.com/zenatuz/utils/blob/main/LICENSE       #
 ############################################################
-
-# GNU All-Permissive License {{{
-#############################################################
-# Copyright © 2022 Renato Batista                           #
-#                                                           #
-# Copying and distribution of this file, with or without    #
-# modification, are permitted in any medium without         #
-# royalty, provided the copyright notice and this notice    #
-# are preserved.                                            #
-#                                                           #
-# This file is offered as-is, without any warranty.         #
-#############################################################
-# End license }}}
-
 
 # Change for any other Gitlab:
 # Ex.: 
