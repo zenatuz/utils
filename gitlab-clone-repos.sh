@@ -31,6 +31,13 @@
 
 GITLAB_URL="${GITLAB_URL:-https://gitlab.com}"
 
+# Colors
+R='\033[0;31m'
+G='\033[0;32m'
+O='\033[0;33m'
+Y='\033[1;33m'
+NOCOLOR='\033[0m'
+
 HELP(){
    # Display Help
    echo "This script clone all projects in a given Gitlab group. It expects to receive the GITLAB_TOKEN as an ENV_VARIABLE."
@@ -43,18 +50,20 @@ HELP(){
    echo
 }
 
-CHECKS(){
+RUN_CHECKS(){
     # Check Token Variable
     if [[ -z "${GITLAB_TOKEN}" ]]; then
-        echo "GITLAB_TOKEN is not provided, you should provide GITLAB_TOKEN. Ex.: 'GITLAB_TOKEN=\"RANDOM-TOKEN\" gitlab-clone-repos.sh -g 999'"
+        echo -e $R"GITLAB_TOKEN is not provided, you should provide GITLAB_TOKEN.: $Y Ex.: 'GITLAB_TOKEN=\"RANDOM-TOKEN\" gitlab-clone-repos.sh -g 999'"$NOCOLOR
         exit 1;
     fi
 
     # Check GITLAB_URL
     STATUS_CODE=$(curl --output /dev/null --silent --write-out "%{http_code}" $GITLAB_URL)
 
-    if [[ $STATUS_CODE != 302 ]]; then
-        echo "The provided GITLAB_URL ($GITLAB_URL) is wrong  or unavailable, please verify the providen GITLAB_URL."      
+    if [[ $STATUS_CODE == 200 ]] || [[ $STATUS_CODE == 301 ]] || [[ $STATUS_CODE == 302 ]] ; then
+        echo -e $G"The URL server ($GITLAB_URL) is valid. :)"$NOCOLOR
+    else
+        echo -e $R"The provided GITLAB_URL ($GITLAB_URL) is wrong  or unavailable, please verify the providen GITLAB_URL." $NOCOLOR
         exit 1;
     fi
 
@@ -62,8 +71,8 @@ CHECKS(){
     TOKEN_RESULT=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_TOKEN" $GITLAB_URL/api/v4/groups)
 
     if [[ "$TOKEN_RESULT" == *"401"* ]]; then
-        echo "GITLAB_TOKEN provided is not valid, cannot list groups, please review the token and token permissions."
-        echo $TOKEN_RESULT
+        echo -e $R"GITLAB_TOKEN provided is not valid, cannot list groups, please review the token and token permissions." $NOCOLOR
+        echo -e $Y $TOKEN_RESULT $NOCOLOR
         exit 1;
     fi
 
@@ -71,20 +80,22 @@ CHECKS(){
     GROUP_RESULT=$(curl -s --header "PRIVATE-TOKEN: $GITLAB_TOKEN" $GITLAB_URL/api/v4/groups/$GROUP_ID)
 
     if [[ "$GROUP_RESULT" == *"404"* ]]; then
-        echo "The provided GROUP_ID is not valid, please review the group ID."
-        echo $GROUP_RESULT
+        echo -e $R "The provided GROUP_ID is not valid, please review the group ID." $NOCOLOR
+        echo -e $Y $GROUP_RESULT $NOCOLOR
         exit 1;
     fi
 }
 
 CLONE_REPOS (){
     if [[ -z "${GROUP_ID}" ]]; then
-        echo "GROUP_ID cannot be empty, you should provide GROUP_ID with -g parameter. Ex.: '-g 10'"
+        echo -e $Y "GROUP_ID cannot be empty, you should provide GROUP_ID with -g parameter. Ex.: '-g 10'" $NOCOLOR
         exit 1;
     fi
 
-    for repo in $(curl -s --header "PRIVATE-TOKEN: $GITLAB_TOKEN" $GITLAB_URL/api/v4/groups/$GROUP_ID | jq -r ".projects[].ssh_url_to_repo");
-        do git clone $repo;
+    for repo in $(curl -s --header "PRIVATE-TOKEN: $GITLAB_TOKEN" $GITLAB_URL/api/v4/groups/$GROUP_ID | jq -r ".projects[].ssh_url_to_repo");do    
+        echo -e "\n##############################"
+        echo -e "Clonning $Y $repo" $NOCOLOR
+        git clone $repo;
     done;
 }
 
@@ -93,7 +104,7 @@ while getopts ":gh" option; do
    case $option in
         g) # execute verifications and clone
             GROUP_ID=$2
-            CHECKS
+            RUN_CHECKS
             CLONE_REPOS
             exit;;
         h) # display Help
